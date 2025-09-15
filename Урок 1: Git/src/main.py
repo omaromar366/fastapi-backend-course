@@ -23,14 +23,18 @@ class Order:
         return sum(dish.price for dish in self.dishes)
 
     def apply_discount(self):
+        if self.customer is None:
+            return self.calculate_total()
         discount_rate = self.customer.get_discount() / 100
         return self.calculate_total() * (1 - discount_rate)
+        
 
     def final_total(self):
         total_after_discount = self.apply_discount()
         total_with_tax = total_after_discount * (1 + Order.TAX_RATE)
         final_total = total_with_tax * (1 + Order.SERVICE_CHARGE)
         return final_total
+
 
     def __str__(self):
         dish_list = "\n".join([str(dish) for dish in self.dishes])
