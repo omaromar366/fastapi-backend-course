@@ -37,11 +37,6 @@ class Order:
         return final_total
 
 
-    def apply_discount(self):
-        discount_rate = self.customer.get_discount() / 100
-        return self.calculate_total() * (1 - discount_rate)
-
-
     def __str__(self):
         dish_list = "\n".join([str(dish) for dish in self.dishes])
         return f"Order for {self.customer.name}:\n{dish_list}\nTotal: ${self.final_total():.2f}"
