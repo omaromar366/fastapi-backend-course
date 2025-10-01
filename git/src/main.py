@@ -95,7 +95,7 @@ def main():
             # Получаем новый список с добавленной книгой
             new_books = add_book(books, title, author, year)
             books = new_books  # Обновляем переменную, чтобы сохранить изменения
-            saving_books(books)  # Сразу сохраняем в файл
+            save_books(books)  # Сразу сохраняем в файл
             print("Книга добавлена!")
 
         elif choice == '3':
