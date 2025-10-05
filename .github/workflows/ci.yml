@@ -1,4 +1,4 @@
-name: CI
+name: CI_for_my_homework
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -18,11 +18,21 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.8'
+          python-version: '3.12'
+
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install ruff
         run: pip install ruff
 
-      - name: Run ruff linter
-        run: ruff check .
+      - name: Run ruff linter (check)
+        run: ruff check git/src
 
+      - name: Run ruff linter (format)
+        run: ruff format git/src --check
