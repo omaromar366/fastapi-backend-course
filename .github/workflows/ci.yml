@@ -1,4 +1,4 @@
-name: CI_for_my_homework
+name: CI
 
 on:
   push:
