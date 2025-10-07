@@ -1,68 +1,91 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+import json
+import os
 
 app = FastAPI()
 
-
-class Task:
-    def __init__(self, task_id: int, task_name: str, status: str = 'In Work'):
-        self.task_name = task_name
-        self.task_id = task_id
-        self.status = status
-
-    def to_dict(self):
-        return {'id': self.task_id, 'name': self.task_name, 'status': self.status}
+DATA_FILE = 'tasks.json'
 
 
-class TasksFu:
-    def __init__(self):
-        self.tasks = []
-        self.next_id = 1
+class TaskStorage:
+    def __init__(self, filename):
+        self.filename = filename
+
+    def load(self):
+        if os.path.exists(self.filename):
+            with open(self.filename, 'r', encoding='utf-8') as f:
+                try:
+                    return json.load(f)
+                except json.JSONDecoderError:
+                    return []
+        return []
+
+    def save(self, tasks):
+        with open(self.filename, 'w', encoding='utf-8') as f:
+            json.dump(tasks, f, indent=4, ensure_ascii=False)
+
+
+class TasksManager:
+    def __init__(self, storage: TaskStorage):
+        self.storage = storage
+        self.tasks = self.storage.load()
+        self.next_id = self._get_next_id()
+
+    def _get_next_id(self):
+        return max([t['id'] for t in self.tasks], default=0) + 1
 
     def get_tasks(self):
-        return [task.to_dict() for task in self.tasks]
+        return self.tasks
 
     def create_task(self, task_name: str):
-        task = Task(self.next_id, task_name, status='In Work')
+        if not task_name.strip():
+            raise HTTPException(status_code=400, detail="Task name cannot be empty")
+
+        task = {'id': self.next_id, 'task_name': task_name, 'status': 'In Work'}
         self.tasks.append(task)
         self.next_id += 1
-        return task.to_dict()
+        self.storage.save(self.tasks)
+        return task
 
     def update_task(self, task_id: int, task_name: str = None, status: str = None):
         for task in self.tasks:
-            if task.task_id == task_id:
+            if task['id'] == task_id:
                 if task_name:
-                    task.task_name = task_name
+                    task['task_name'] = task_name
                 if status:
-                    task.status = status
-                return task.to_dict()
-        raise Exception("Task not found")
+                    task['status'] = status
+                self.storage.save(self.tasks)
+                return task
+        raise HTTPException(status_code=404, detail="Task not found")
 
     def delete_task(self, task_id: int):
         for task in self.tasks:
-            if task.task_id == task_id:
+            if task['id'] == task_id:
                 self.tasks.remove(task)
-                return 'Task deleted'
-        raise Exception("Task not found")
+            self.storage.save(self.tasks)
+            return {"message": "Task deleted"}
+        raise HTTPException(status_code=404, detail="Task not found")
 
 
-task_fu = TasksFu()
+storage = TaskStorage(DATA_FILE)
+manager = TasksManager(storage)
 
 
 @app.get("/tasks")
 def get_tasks():
-    return task_fu.get_tasks()
+    return manager.get_tasks()
 
 
 @app.post("/tasks")
 def create_task(task_name: str):
-    return task_fu.create_task(task_name)
+    return manager.create_task(task_name)
 
 
 @app.put("/tasks/{task_id}")
 def update_task(task_id: int, task_name: str = None, status: str = None):
-    return task_fu.update_task(task_id, task_name, status)
+    return manager.update_task(task_id, task_name, status)
 
 
 @app.delete("/tasks/{task_id}")
 def delete_task(task_id: int):
-    return task_fu.delete_task(task_id)
+    return manager.delete_task(task_id)
