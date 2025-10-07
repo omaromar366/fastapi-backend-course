@@ -1,14 +1,18 @@
 import os
 import json
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 class GistStorage:
     def __init__(self):
-        self.token = os.getenv("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")
-        self.gist_id = os.getenv("7f6e92305aba7d32df48719ab3479959")
-        self.api_url = f"https://api.github.com/gists/7f6e92305aba7d32df48719ab3479959"
+        self.token = os.getenv("GITHUB_TOKEN")
+        self.gist_id = os.getenv("GIST_ID")
+        self.api_url = f"https://api.github.com/gists/{self.gist_id}"
         self.headers = {
-            "Authorization": f"token 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",
+            "Authorization": f"token {self.token}",
             "Accept": "application/vnd.github+json"
         }
 
