@@ -34,3 +34,5 @@ class CloudflareLLM:
             return data.get("result", {}).get("response", "Нет ответа от LLM")
         except requests.exceptions.RequestException as e:
             return f"Ошибка при запросе к Cloudflare: {e}"
+
+print(os.getenv("CLOUDFLARE_AUTH_TOKEN"))
