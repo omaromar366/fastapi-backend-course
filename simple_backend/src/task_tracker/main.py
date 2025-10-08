@@ -1,10 +1,12 @@
 from fastapi import FastAPI, HTTPException
 from task_storage import GistStorage
+from cloud_llm import CloudflareLLM
 
 
 app = FastAPI()
 
 storage = GistStorage()
+llm = CloudflareLLM()
 
 
 @app.get("/tasks")
@@ -20,7 +22,8 @@ def create_task(task_name  :  str):
     try:
         tasks = storage.load_data()
         new_id = max([t["id"] for t in tasks], default=0) + 1
-        new_task = {"id": new_id, "task_name": task_name, "status": "in work"}
+        solution = llm.get_solution(task_name)
+        new_task = {"id": new_id, "task_name": task_name, "status": "in work", 'solution':solution}
         tasks.append(new_task)
         storage.save_data(tasks)
         return new_task

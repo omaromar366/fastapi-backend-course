@@ -1,5 +1,6 @@
 import os
 import json
+import sys
 import requests
 from dotenv import load_dotenv
 
@@ -30,3 +31,9 @@ class GistStorage:
         response = requests.patch(self.api_url, headers=self.headers, json=payload)
         response.raise_for_status()
         return response.json()
+
+print("Token:", os.getenv("GITHUB_TOKEN"))
+print("Gist ID:", os.getenv("GIST_ID"))
+
+print(sys.executable)  # путь к интерпретатору
+print(sys.path)
