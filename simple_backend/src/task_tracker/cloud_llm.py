@@ -1,23 +1,18 @@
-import requests
-import os
-from dotenv import load_dotenv
+from config import settings
+from base_http_client import BaseHTTPClient
 
-load_dotenv()
 
-class CloudflareLLM:
-    def __init__(self):
-        self.token = os.getenv("CLOUDFLARE_AUTH_TOKEN")
-        self.account_id = os.getenv("CLOUDFLARE_ACCOUNT_ID")
-        self.model = os.getenv("CLOUDFLARE_MODEL", "@hf/google/gemma-7b-it")
 
-        if not self.token or not self.account_id:
-            raise ValueError("Не заданы CLOUDFLARE_AUTH_TOKEN или CLOUDFLARE_ACCOUNT_ID")
+class CloudflareLLM(BaseHTTPClient):
+    def __init__(self, token: str | None = None):
+        # Берём токен из аргумента или из настроек
+        token = token or settings.cloudflare_token
+        self.account_id = settings.cloudflare_account_id
+        self.model = settings.cloudflare_model
+        url = f"https://api.cloudflare.com/client/v4/accounts/{self.account_id}/ai/run/{self.model}"
 
-        self.url = f"https://api.cloudflare.com/client/v4/accounts/{self.account_id}/ai/run/{self.model}"
-        self.headers = {
-            "Authorization": f"Bearer {self.token}",
-            "Content-Type": "application/json"
-        }
+        # Заголовки сразу передаём в родителя
+        super().__init__(token, url)
 
     def get_solution(self, task_text: str) -> str:
         payload = {
@@ -26,13 +21,15 @@ class CloudflareLLM:
                 {"role": "user", "content": f"Объясни, как решить эту задачу:\n{task_text}"}
             ]
         }
-
         try:
-            response = requests.post(self.url, headers=self.headers, json=payload, timeout=30)
-            response.raise_for_status()
-            data = response.json()
+            data = self.post(self.url, payload)
             return data.get("result", {}).get("response", "Нет ответа от LLM")
-        except requests.exceptions.RequestException as e:
-            return f"Ошибка при запросе к Cloudflare: {e}"
+        except Exception as e:
+            return f"Ошибка запроса к LLM: {e}"
 
-print(os.getenv("CLOUDFLARE_AUTH_TOKEN"))
+    def load_data(self):
+        return None
+
+    def save_data(self, data):
+        return None
+

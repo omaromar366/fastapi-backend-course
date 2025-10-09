@@ -1,11 +1,13 @@
 from fastapi import FastAPI, HTTPException
 from task_storage import GistStorage
 from cloud_llm import CloudflareLLM
+from config import settings
+from base_http_client import BaseHTTPClient
 
 
 app = FastAPI()
 
-storage = GistStorage()
+storage = GistStorage(BaseHTTPClient, settings.github_token)
 llm = CloudflareLLM()
 
 
